@@ -12,13 +12,13 @@ export function Header(){
                     <UserButton/>
 
                     {/* Signing In  */}
-                    <SignedIn>
+                    {/* <SignedIn>
                         <SignOutButton>
                             <Button>
                                 Sign Out
                             </Button>
                         </SignOutButton>
-                    </SignedIn>
+                    </SignedIn> */}
 
                     {/* Signing Out  */}
                     <SignedOut>
