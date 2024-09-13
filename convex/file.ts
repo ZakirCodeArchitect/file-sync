@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ConvexError, v } from "convex/values";
 import {mutation, query, QueryCtx, MutationCtx} from "./_generated/server";
-import { getUser } from "./users";
+import { getUser } from './users';
 
 export const generateUploadUrl = mutation(async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -103,4 +103,38 @@ export const getFiles = query ({
         .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
         .collect();
     },
+});
+
+
+export const deleteFile = mutation({
+    args: {fileId: v.id("files")},
+    async handler(ctx, args){
+        const identity = await ctx.auth.getUserIdentity();
+
+        if(!identity)
+        {
+            throw new ConvexError("You do not have the access to this organisation");
+        }
+
+        const file = await ctx.db.get(args.fileId);
+
+        if(!file)
+        {
+            throw new ConvexError("This file doesnot Exist");
+        }
+
+        const hasAccess = await  hasAccessToOrgs(
+            ctx,
+            identity.tokenIdentifier,
+            file.orgId
+        );
+
+        if(!hasAccess)
+        {
+            throw new ConvexError("You do not have the access to delete this file");
+        }
+
+        await ctx.db.delete(args.fileId);
+    },
+
 });
