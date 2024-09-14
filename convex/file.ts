@@ -3,6 +3,7 @@
 import { ConvexError, v } from "convex/values";
 import {mutation, query, QueryCtx, MutationCtx} from "./_generated/server";
 import { getUser } from './users';
+import { fileTypes } from "./schema";
 
 export const generateUploadUrl = mutation(async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -40,7 +41,8 @@ export const createFile = mutation({
     args: {
         name: v.string(),
         fileId: v.id("_storage"),
-        orgId: v.string()
+        orgId: v.string(),
+        type: fileTypes,
     },
     async handler(ctx, args){
         const identity = await ctx.auth.getUserIdentity();
@@ -65,6 +67,7 @@ export const createFile = mutation({
             name: args.name,
             orgId: args.orgId,
             fileId: args.fileId,
+            type: args.type
         });
     },
 
@@ -102,9 +105,25 @@ export const getFiles = query ({
         .query('files')
         .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
         .collect();
+
+
+        
     },
 });
 
+export const getFileUrl = query({
+    args: { fileId: v.id("_storage") },
+    handler: async (ctx, { fileId }) => {
+        const fileRecord = await ctx.db.query("files").filter(q => q.eq(q.field("fileId"), fileId)).first();
+
+        if (fileRecord && fileRecord.type === "image") {
+            const url = await ctx.storage.getUrl(fileId);
+            return { url };
+        }
+
+        return { error: "File not found or not an image" };
+    },
+});
 
 export const deleteFile = mutation({
     args: {fileId: v.id("files")},

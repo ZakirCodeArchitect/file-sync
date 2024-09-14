@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 "use client"
 
@@ -25,6 +26,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Doc } from "../../convex/_generated/dataModel";
  
 const formSchema = z.object({
   title: z.string().min(1).max(200),
@@ -59,22 +61,30 @@ export  function UploadButton() {
     // Get a short lived upload URL
     const postUrl = await generateUploadUrl();
 
+    const fileType = values.file[0].type;
     // Step 2: POST the file to the URL
     const result = await fetch(postUrl, {
       method: "POST",
-      headers: { "Content-Type": values.file[0].type },
+      headers: { "Content-Type": fileType },
       body: values.file[0],
     });
 
     // Storage ID
     const { storageId } = await result.json();
 
+    const types = {
+      'image/png': 'image',
+      'application/pdf' : 'pdf',
+      'text/csv' : 'csv',
+    } as Record<string, Doc<"files">["type"]>;
+    
     try{
       await createFile({
         name: values.title,
         fileId: storageId,
         orgId,
-      })
+        type: types[fileType],
+      });
 
       form.reset();
       setIsFileDialogOpen(false);

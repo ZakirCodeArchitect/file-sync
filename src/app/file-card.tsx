@@ -1,25 +1,26 @@
+/* eslint-disable react/jsx-no-undef */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
-} from "@/components/ui/card"
-import { Doc } from "../../convex/_generated/dataModel"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui/card"; 
+import { Doc, Id } from '../../convex/_generated/dataModel';
+import { Button } from "@/components/ui/button";
+import React, { useEffect, useState } from "react";
+import { useQuery } from "convex/react"; 
+
+import { query } from "../../convex/_generated/server";
 
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { CircleChevronDownIcon, DeleteIcon, MoreVertical, Trash, Trash2Icon } from "lucide-react";
-
+} from "@/components/ui/dropdown-menu";
+import { FileTextIcon, GanttChart, ImageIcon, MoreVertical, Trash } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,98 +30,109 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { useState } from "react";
+} from "@/components/ui/alert-dialog";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
+import { getFiles } from '../../convex/file';
 
-
-function FileCardActions({file}: {file: Doc<"files"> }) {
+function FileCardActions({ file }: { file: Doc<"files"> }) {
     const deleteFile = useMutation(api.file.deleteFile);
-    const {toast} = useToast();
+    const { toast } = useToast();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    return (    
+
+    return (
         <>
-        <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your account
-                    and remove your data from our servers.
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={async() => {
-                    await deleteFile({
-                        fileId: file._id,
-                    });
-                    toast({
-                        variant: "default",
-                        title: "File Deleted",
-                        description: "Your File is now gone from the System",
-                    });
-                }}
-                >
-                    Continue</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+            <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete your file
+                            and remove it from our servers.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                await deleteFile({ fileId: file._id });
+                                toast({
+                                    variant: "default",
+                                    title: "File Deleted",
+                                    description: "Your file has been removed from the system.",
+                                });
+                            }}
+                        >
+                            Continue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
-
-        <AlertDialog>
-            <AlertDialogTrigger></AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete your account
-                    and remove your data from our servers.
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction>Continue</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-
-        <DropdownMenu>
-            <DropdownMenuTrigger>
-                <MoreVertical/>
-            </DropdownMenuTrigger>
+            <DropdownMenu>
+                <DropdownMenuTrigger>
+                    <MoreVertical />
+                </DropdownMenuTrigger>
                 <DropdownMenuContent>
                     <DropdownMenuItem
                         onClick={() => setIsConfirmOpen(true)}
-                        className="flex gap-1 text-red-500 items-center">
-                        <Trash className="w-4 h-4"/> Delete
+                        className="flex gap-1 text-red-500 items-center"
+                    >
+                        <Trash className="w-4 h-4" /> Delete
                     </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    </>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </>
     );
 }
-export function FileCard({file}: {file: Doc<"files">}) {
+
+// Utility function to generate the file URL for downloading
+function getFileUrl(fileId: string): string {
+    return `${process.env.NEXT_PUBLIC_CONVEX_URL}/api/storage/${fileId}`;
+}
+
+
+
+export function FileCard({ file }: { file: Doc<"files"> }) {
+
+    // For icons 
+    const typeIcons = {
+        image: <ImageIcon />,
+        pdf: <FileTextIcon />,
+        csv: <GanttChart />
+    } as Record<Doc<"files">["type"], React.ReactNode>;
+
     return (
         <Card>
             <CardHeader className="relative">
-                <CardTitle>
+                <CardTitle className="flex gap-2 items-center">
+                    <div className="flex justify-center">{typeIcons[file.type]}</div>
                     {file.name}
                 </CardTitle>
                 <div className="absolute top-2 right-2">
                     <FileCardActions file={file} />
                 </div>
-                {/* <CardDescription></CardDescription> */}
             </CardHeader>
-            <CardContent>
-                <p>Card Content</p>
+            <CardContent className="h-[200px] flex justify-center items-center">
+            {file.type === "image" && file.fileId && (
+                    <Image 
+                        alt={file.name}
+                        width="200"
+                        height="100"
+                        src={getFileUrl(file.fileId)} // Use the generated URL for the image
+                    />
+                )}
+                {file.type === "csv" && <GanttChart className="w-20 h-20"/>}
+                {file.type === "pdf" && <FileTextIcon className="w-20 h-20"/>}
             </CardContent>
-            <CardFooter>
-                <Button>Download</Button>
+            <CardFooter className="flex justify-center">
+                <Button onClick={() => {
+                    // Open a new tab for the file location to download
+                    window.open(getFileUrl(file.fileId), "_blank");
+                }}>Download</Button>
             </CardFooter>
         </Card>
-    )
+    );
 }
