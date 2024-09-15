@@ -7,20 +7,21 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"; 
-import { Doc, Id } from '../../convex/_generated/dataModel';
+import { Doc, Id } from '../../../../convex/_generated/dataModel';
 import { Button } from "@/components/ui/button";
 import React, { useEffect, useState } from "react";
 import { useQuery } from "convex/react"; 
 
-import { query } from "../../convex/_generated/server";
+import { query } from "../../../../convex/_generated/server";
 
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { FileTextIcon, GanttChart, ImageIcon, MoreVertical, Trash } from "lucide-react";
+import { FileTextIcon, GanttChart, ImageIcon, MoreVertical, StarIcon, Trash } from "lucide-react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -32,13 +33,14 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "../../../../convex/_generated/api";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { getFiles } from '../../convex/file';
+import { getFiles } from '../../../../convex/file';
 
 function FileCardActions({ file }: { file: Doc<"files"> }) {
     const deleteFile = useMutation(api.file.deleteFile);
+    const toggleFavorite = useMutation(api.file.toggleFavorite);
     const { toast } = useToast();
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -76,6 +78,18 @@ function FileCardActions({ file }: { file: Doc<"files"> }) {
                     <MoreVertical />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
+                    <DropdownMenuItem
+                        onClick={() => {
+                            toggleFavorite({
+                                fileId: file._id
+                            })
+                        }}
+                        className="flex gap-1 items-center"
+                    >
+                        <StarIcon className="w-4 h-4" /> Favorite
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator/>
                     <DropdownMenuItem
                         onClick={() => setIsConfirmOpen(true)}
                         className="flex gap-1 text-red-500 items-center"

@@ -1,15 +1,16 @@
-
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ConvexError, v } from "convex/values";
-import {mutation, query, QueryCtx, MutationCtx} from "./_generated/server";
+import { mutation, query, QueryCtx, MutationCtx } from "./_generated/server";
 import { getUser } from './users';
 import { fileTypes } from "./schema";
+import { Id } from "./_generated/dataModel";
 
+// Generate upload URL
 export const generateUploadUrl = mutation(async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
 
-    if(!identity)
-    {
+    if (!identity) {
         throw new ConvexError("You must be logged in to upload a file");
     }
 
@@ -17,26 +18,21 @@ export const generateUploadUrl = mutation(async (ctx) => {
 });
 
 async function hasAccessToOrgs(
-    ctx: QueryCtx | MutationCtx ,
+    ctx: QueryCtx | MutationCtx,
     tokenIdentifier: string, 
-    orgId: string)
-    {
+    orgId: string
+) {
     const user = await getUser(ctx, tokenIdentifier);
+    const hasAccess = user.orgsIds.includes(orgId) || user.tokenIdentifier.includes(orgId);
 
-        const hasAccess =
-            user.orgsIds.includes(orgId) || user.tokenIdentifier.includes(orgId);
+    if (!hasAccess) {
+        throw new ConvexError("You do not have access to this Organization");
+    }
 
-        if(!hasAccess)
-        {
-            throw new ConvexError("You do not have access to this Organization");
-        }
-
-        return hasAccess;
+    return hasAccess;
 }
 
-
-
-// Inserting Data into Database
+// Insert File into Database
 export const createFile = mutation({
     args: {
         name: v.string(),
@@ -44,22 +40,16 @@ export const createFile = mutation({
         orgId: v.string(),
         type: fileTypes,
     },
-    async handler(ctx, args){
+    async handler(ctx, args) {
         const identity = await ctx.auth.getUserIdentity();
 
-        if(!identity)
-        {
+        if (!identity) {
             throw new ConvexError("You must be logged in to upload a file");
         }
 
-        const hasAccess = await  hasAccessToOrgs(
-            ctx,
-            identity.tokenIdentifier,
-            args.orgId
-        );
+        const hasAccess = await hasAccessToOrgs(ctx, identity.tokenIdentifier, args.orgId);
 
-        if(!hasAccess)
-        {
+        if (!hasAccess) {
             throw new ConvexError("You do not have access to this Organization");
         }
 
@@ -70,90 +60,153 @@ export const createFile = mutation({
             type: args.type
         });
     },
-
 });
 
-// Fetching Data from Database
-
-export const getFiles = query ({
-    args: {
-        // fetching data only related to the organization 
-        orgId: v.string()   
-    },
-    async handler(ctx,args ){
-
-        // If there is not identity of the user means not yet logged in, can't view the files 
+// Fetch Files with Optional Search Query
+export const getFiles = query({
+    args: v.object({
+        orgId: v.string(),
+        query: v.optional(v.string()),
+        favorites: v.optional(v.boolean())
+    }), 
+    async handler(ctx, args) {
         const identity = await ctx.auth.getUserIdentity();
 
-        if(!identity)
-        {
+        if (!identity) {
             return [];
         }
 
-        const hasAccess = await  hasAccessToOrgs(
-            ctx,
-            identity.tokenIdentifier,
-            args.orgId
-        );
-        
-        if(!hasAccess)
-        {
-            throw new ConvexError("You do not have access to this organization");
+        const hasAccess = await hasAccessToOrgs(ctx, identity.tokenIdentifier, args.orgId);
+
+        if (!hasAccess) {
+            return [];
         }
 
-        return ctx.db
-        .query('files')
-        .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+        // Fetch files by orgId
+        let files = await ctx.db
+            .query("files")
+            .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+            .collect();
+
+        // If a query exists, filter the files by name
+      const query = args.query;
+      if (query) {
+        files = files.filter((file) => 
+            file.name.toLowerCase().includes(query.toLowerCase())
+        );
+      }
+
+      if(args.favorites) {
+
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_tokenIdentifier", (q) =>
+            q.eq("tokenIdentifier", identity.tokenIdentifier)
+        ).first();
+
+        if(!user)
+        {
+            return files;
+        }
+        
+        const favorites = await ctx.db
+        .query("favorites")
+        .withIndex("by_userId_orgId_fileId", (q) =>
+            q.eq("userId", user._id).eq("orgId", args.orgId)
+        )
         .collect();
 
+        files = files.filter((file) => 
+            favorites.some((favorite) => favorite.fileId === file._id)
+        );
+      }
 
-        
+      return files;
     },
 });
 
-export const getFileUrl = query({
-    args: { fileId: v.id("_storage") },
-    handler: async (ctx, { fileId }) => {
-        const fileRecord = await ctx.db.query("files").filter(q => q.eq(q.field("fileId"), fileId)).first();
-
-        if (fileRecord && fileRecord.type === "image") {
-            const url = await ctx.storage.getUrl(fileId);
-            return { url };
-        }
-
-        return { error: "File not found or not an image" };
-    },
-});
-
+// Delete File from Database
 export const deleteFile = mutation({
-    args: {fileId: v.id("files")},
-    async handler(ctx, args){
-        const identity = await ctx.auth.getUserIdentity();
+    args: { fileId: v.id("files") },
+    async handler(ctx, args) {
 
-        if(!identity)
+        // Reusable Access Checker 
+        const access = await hasAccessToFile(ctx, args.fileId)
+
+        if(!access)
         {
-            throw new ConvexError("You do not have the access to this organisation");
+            throw new ConvexError("You do not have the access")
         }
 
-        const file = await ctx.db.get(args.fileId);
+        await ctx.db.delete(args.fileId);
+    },
+});
 
-        if(!file)
+export const toggleFavorite = mutation({
+    args: { fileId: v.id("files") },
+    async handler(ctx, args) {
+
+        // Resuable Access Checker 
+        const access = await hasAccessToFile(ctx, args.fileId);
+
+        if(!access)
         {
-            throw new ConvexError("This file doesnot Exist");
+            throw new ConvexError("You do not have the access");
+        }
+        
+        const favorite = await ctx.db
+            .query("favorites")
+            .withIndex("by_userId_orgId_fileId", (q) =>
+            q.eq("userId", access.user._id).eq("orgId", access.file.orgId).eq("fileId", access.file._id)
+        ).first();
+
+         if(!favorite)
+         {
+            await ctx.db.insert("favorites", {
+                fileId: access.file._id,
+                userId: access.user._id,
+                orgId: access.file.orgId
+            });
+         }
+         else{
+            await ctx.db.delete(favorite._id);
+         }
+    },
+})
+
+async function hasAccessToFile(ctx: QueryCtx | MutationCtx, fileId: Id<"files">) {
+    const identity = await ctx.auth.getUserIdentity();
+
+        if (!identity) {
+            return null;
         }
 
-        const hasAccess = await  hasAccessToOrgs(
+        const file = await ctx.db.get(fileId);
+
+        if (!file) {
+            return null;
+        }
+
+        const hasAccess = await hasAccessToOrgs(
             ctx,
             identity.tokenIdentifier,
             file.orgId
         );
 
-        if(!hasAccess)
-        {
-            throw new ConvexError("You do not have the access to delete this file");
+        if (!hasAccess) {
+            return null;
         }
 
-        await ctx.db.delete(args.fileId);
-    },
+        const user = await ctx.db
+            .query("users")
+            .withIndex("by_tokenIdentifier", (q) =>
+            q.eq("tokenIdentifier", identity.tokenIdentifier)
+        ).first();
 
-});
+        if(!user)
+        {
+            return null;
+        }
+
+        return {user,file};
+}
