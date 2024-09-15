@@ -3,6 +3,8 @@ import { v } from "convex/values";
 
 export const fileTypes = v.union(v.literal("image"), v.literal("csv"), v.literal("pdf"));
 
+export const roles = v.union(v.literal("admin"), v.literal("member"));
+
 export default defineSchema({
   files: defineTable({ 
     name: v.string(), 
@@ -19,6 +21,11 @@ export default defineSchema({
  }).index("by_userId_orgId_fileId", ["userId", "orgId", "fileId"]),
   users: defineTable({    
     tokenIdentifier: v.string(),
-    orgsIds: v.array(v.string()),
+    orgsIds: v.array(
+      v.object({
+        orgId: v.string(),
+        role: roles,
+    })
+  ),
   }).index("by_tokenIdentifier", ["tokenIdentifier"])
 });
