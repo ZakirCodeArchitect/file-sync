@@ -65,8 +65,8 @@ function FileCardActions({
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={async () => {
-                                await deleteFile({ fileId: file._id });
+                            onClick={ () => {
+                                deleteFile({ fileId: file._id });
                                 toast({
                                     variant: "default",
                                     title: "File Deleted",

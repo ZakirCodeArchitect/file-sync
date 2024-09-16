@@ -1,25 +1,16 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "./ConvexClientProvider";
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
 import { Header } from "./header";
 import { Toaster } from "@/components/ui/toaster";
+// import { Footer } from "./footer";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "File Sync",
-  description: "Upload and Share Files with your Team Mates",
+  description: "Manage your File Seamlessly",
 };
 
 export default function RootLayout({
@@ -29,13 +20,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={inter.className}>
         <ConvexClientProvider>
-          <Toaster/>
+          <Toaster />
           <Header />
-            {children}
+          {children}
+          {/* <Footer /> */}
         </ConvexClientProvider>
       </body>
     </html>

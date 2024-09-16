@@ -120,11 +120,14 @@ export  function UploadButton() {
               setIsFileDialogOpen(isOpen),
               form.reset();
               }}>
+              
               <DialogTrigger asChild>
-                <Button>
+                <Button className="mr-5">
                   Upload File
                 </Button>
               </DialogTrigger>
+
+
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle className="mb-8">Upload your File here</DialogTitle>

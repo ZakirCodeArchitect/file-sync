@@ -17,7 +17,7 @@ import Link from "next/link";
 
 function Placeholder(){
   return (
-    <div className="flex flex-col gap-7 w-full items-center mt-24">
+    <div className="flex flex-col gap-7 w-full items-center mt-24 mr-5">
         <Image
             alt="An image for the background"
             width="400"

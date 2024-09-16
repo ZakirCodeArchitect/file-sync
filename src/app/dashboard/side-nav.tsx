@@ -3,7 +3,7 @@
 
 import Link from "next/link"
 import { Button } from "../../components/ui/button"
-import { FileIcon, StarIcon } from "lucide-react"
+import { FileIcon, Home, StarIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 import clsx from "clsx"
 
@@ -16,7 +16,7 @@ export function SideNav() {
             <Link href="/dashboard/files">
               <Button variant={"link"} 
               className={clsx("flex gap-2", {
-                "text-blue-900": pathname.includes("/dashboard/files"),
+                "text-teal-800": pathname.includes("/dashboard/files"),
               })}
               >
                 <FileIcon/> All files
@@ -26,10 +26,20 @@ export function SideNav() {
             <Link href="/dashboard/favorites">
               <Button variant={"link"} 
               className={clsx("flex gap-2", {
-                "text-blue-900": pathname.includes("/dashboard/favorites"),
+                "text-teal-800": pathname.includes("/dashboard/favorites"),
               })}
               >
                 <StarIcon/> Marked
+              </Button>
+            </Link>
+
+            <Link href="/">
+              <Button variant={"link"} 
+              className={clsx("flex gap-2", {
+                "text-teal-800": pathname.includes("/"),
+              })}
+              >
+                <Home/> Home
               </Button>
             </Link>
 
