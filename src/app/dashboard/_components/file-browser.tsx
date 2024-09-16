@@ -73,12 +73,13 @@ export function FileBrowser({ favoritesOnly }: { favoritesOnly?: boolean; }) {
             </div>
             <div className="w-full sm:w-auto">
               {/* Upload Button */}
-              <Button
+              {/* <Button 
                 size="sm"
                 className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white"
               >
                 Upload File
-              </Button>
+              </Button> */}
+              <UploadButton/>
             </div>
           </div>
 

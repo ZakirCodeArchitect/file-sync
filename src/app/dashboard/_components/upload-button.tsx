@@ -122,7 +122,10 @@ export  function UploadButton() {
               }}>
               
               <DialogTrigger asChild>
-                <Button className="mr-5">
+              <Button 
+                size="sm"
+                className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white"
+              >
                   Upload File
                 </Button>
               </DialogTrigger>
