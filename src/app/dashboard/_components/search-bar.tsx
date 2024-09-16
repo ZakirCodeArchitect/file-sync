@@ -1,69 +1,76 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, SearchIcon } from "lucide-react"
-import { Dispatch, SetStateAction } from "react"
-import { useForm } from "react-hook-form"
-// import { Form, useForm } from "react-hook-form"
-import { z } from "zod"
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, SearchIcon } from "lucide-react";
+import { Dispatch, SetStateAction } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const formSchema = z.object({
-    query: z.string().min(0).max(200),
-    })
+  query: z.string().min(0).max(200),
+});
 
-export function SearchBar({query, setQuery}: {
-    query: string;
-    setQuery: Dispatch<SetStateAction<string>>;
-
+export function SearchBar({
+  query,
+  setQuery,
+}: {
+  query: string;
+  setQuery: Dispatch<SetStateAction<string>>;
 }) {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      query: "",
+    },
+  });
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-          query: "",
-        },
-      });
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setQuery(values.query);
+  }
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        setQuery(values.query);
-    }
-        return (
-            <div>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex gap-2 items-center">
-                     {/* First Input For files title  */}
-                      <FormField
-                        control={form.control}
-                        name="query"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input {...field} 
-                              placeholder="your file name"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
+  return (
+    <div className="w-full">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="flex gap-2 flex-col sm:flex-row"
+        >
+          {/* Input field */}
+          <FormField
+            control={form.control}
+            name="query"
+            render={({ field }) => (
+              <FormItem className="flex-grow w-full">
+                <FormControl>
+                  <Input {...field} placeholder="Your file name" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                      <Button
-                        size="sm"
-                        type="submit"
-                        disabled={form.formState.isSubmitting}
-                        className="flex gap-1">
-
-                        {form.formState.isSubmitting && (
-                          <Loader2 className="h-4 w-4 animate-spin"/>
-                        )}
-                        <SearchIcon/> Search
-                        </Button>
-                    </form>
-                  </Form>
-        </div>
-    )
-
-    }
+          {/* Search button */}
+          <Button
+            size="sm"
+            type="submit"
+            disabled={form.formState.isSubmitting}
+            className="flex gap-1 w-full sm:w-auto"
+          >
+            {form.formState.isSubmitting && (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            )}
+            <SearchIcon /> Search
+          </Button>
+        </form>
+      </Form>
+    </div>
+  );
+}

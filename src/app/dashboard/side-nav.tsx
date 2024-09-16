@@ -12,37 +12,33 @@ export function SideNav() {
   const pathname = usePathname()
 
     return (
-        <div className="w-40 flex flex-col gap-4">
+        <div className="w-full sm:w-40 flex lg:flex-col sm:flex gap-4">
             <Link href="/dashboard/files">
               <Button variant={"link"} 
-              className={clsx("flex gap-2", {
+              className={clsx("flex gap-2 justify-start", {
                 "text-teal-800": pathname.includes("/dashboard/files"),
-              })}
-              >
-                <FileIcon/> All files
+              })}>
+                <FileIcon className="h-4 w-4 md:h-5 md:w-5" /> All files
               </Button>
             </Link>
 
             <Link href="/dashboard/favorites">
               <Button variant={"link"} 
-              className={clsx("flex gap-2", {
+              className={clsx("flex gap-2 justify-start", {
                 "text-teal-800": pathname.includes("/dashboard/favorites"),
-              })}
-              >
-                <StarIcon/> Marked
+              })}>
+                <StarIcon className="h-4 w-4 md:h-5 md:w-5" /> Marked
               </Button>
             </Link>
 
             <Link href="/">
               <Button variant={"link"} 
-              className={clsx("flex gap-2", {
+              className={clsx("flex gap-2 justify-start", {
                 "text-teal-800": pathname.includes("/"),
-              })}
-              >
-                <Home/> Home
+              })}>
+                <Home className="h-4 w-4 md:h-5 md:w-5" /> Home
               </Button>
             </Link>
-
-          </div>
+        </div>
     )
 }
