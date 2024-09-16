@@ -4,7 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Header } from "./header";
-import { SignInButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export default function LandingPage() {
   return (
@@ -41,14 +41,27 @@ export default function LandingPage() {
               minute.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link
+              {/* <Link
                 href=""
                 className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                  Get started
-                  </Link> 
-              </div>
+              > */}
+              <SignedOut>
+                <div className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                  <SignInButton>
+                    Get Started
+                  </SignInButton>
+                </div>
+              </SignedOut>
 
+              <SignedIn>
+                  <Link
+                    href="/dashboard/files"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    Dashboard
+                  </Link> 
+              </SignedIn>
+              {/* </Link> */}
               <a
                 href="#"
                 className="text-sm font-semibold leading-6 text-gray-900"
